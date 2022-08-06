@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "install": "^0.13.0",
+    "npm": "^8.15.1",
+    "react": "^16.1.0",
+    "react-dom": "^16.1.0",
+    "react-redux": "^8.0.2",
+    "redux": "^4.2.0"
+  }
+}
