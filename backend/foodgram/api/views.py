@@ -1,65 +1,101 @@
 # from django.contrib.auth.tokens import default_token_generator
 # from django.core.mail import send_mail
 # from django.db.models import Avg
+from multiprocessing import context
 from django.shortcuts import get_object_or_404
 # from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
+#from psycopg2 import DatabaseError
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from .permissions import IsAdmin
 from rest_framework.response import Response
 # from rest_framework.views import APIView
-from users.models import User
+from users.models import User, Subscribe
 from recipes.models import Recipe, Tag, Ingredient
-from .serializers import (UserSerializer,
-                          UserSerializerReadOnly,
+from .serializers import (CustomUserSerializer,
+                          PasswordSerilizer,
+                          SubscribeSerializer,
                           RecipeSerializer,
                           IngredientSerializer,
                           TagSerializer)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAdmin,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
-    lookup_field = 'username'
+    serializer_class = CustomUserSerializer
 
-    @action(methods=['POST'],
-            detail=False,
-            permission_classes=(IsAuthenticated, IsAdmin,))
-    def create_user(self, request):
-        serializer = UserSerializerReadOnly(data=request.data)
+    @action(detail=False,
+            methods=['POST'],
+            permission_classes=(IsAuthenticated, ))
+    def set_password(self, request, pk=None):
+        user = self.request.user
+        if user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        serializer = PasswordSerilizer(
+            data=request.data,
+            context={'request': request}
+        )
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,
-                            status=status.HTTP_201_CREATED)
+            user.set_password(serializer.data['new_password'])
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['GET', 'PATCH'],
-            detail=False,
-            permission_classes=[permissions.IsAuthenticated],
-            url_path='me')
-    def change_info(self, request):
-        serializer = UserSerializer(request.user)
-        if request.method == 'PATCH':
-            if request.user.role == 'admin' or request.user.is_staff:
-                serializer = UserSerializer(
-                    request.user,
-                    data=request.data,
-                    partial=True)
-            else:
-                serializer = UserSerializerReadOnly(
-                    request.user,
-                    data=request.data,
-                    partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.data)
+    @action(detail=False,
+            methods=['GET'],
+            permission_classes=(IsAuthenticated, ))
+    def subscriptions(self, request):
+        queryset = User.objects.filter(follower__user=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscribeSerializer(
+            pages,
+            many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=True,
+            methods=['POST', 'DELETE'],
+            permission_classes=(IsAuthenticated, ))
+    def subscribe(self, request, id):
+        user = self.request.user
+        author = get_object_or_404(User, id=id)
+        follow = Subscribe.objects.filter(
+            user=user,
+            author=author
+            )
+        if user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if request.method == 'POST':
+            if user == author:
+                data = {
+                    'errors':
+                        ('Вы пытаетесь подписаться на самого себя')
+                }
+                return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+            if follow.exists():
+                data = {
+                    'errors':
+                        ('Вы уже подписаны на этого автора')
+                }
+                return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+            Subscribe.objects.create(user=user, author=author)
+            serializer = SubscribeSerializer(author,
+                                             context={'request': request})
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            if not follow.exists():
+                data = {
+                    'errors':
+                        ('Вы не подписаны на этого автора')
+                }
+                return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+            follow.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RecipeViweSet(viewsets.ModelViewSet):

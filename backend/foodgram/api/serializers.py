@@ -1,43 +1,104 @@
+from multiprocessing import current_process
 from django.core.exceptions import ValidationError
+from pkg_resources import require
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from users.models import User
+from users.models import User, Subscribe
 from recipes.models import Recipe, Tag, Ingredient
-import webcolors
+from drf_extra_fields.fields import Base64ImageField
 
 
-class UserSerializer(serializers.ModelSerializer):
+class PasswordSerilizer(serializers.ModelSerializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+
+class SubscribeRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False)
 
     class Meta:
-        model = User
-        fields = (
-            'username', 'email',
-            'first_name', 'last_name'
+        fileds = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
         )
 
 
-class SignUpSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ('email', 'username')
-
-    def validate(self, data):
-        if data['username'] == 'me':
-            raise ValidationError(message='Запрещенное имя пользователя!')
-        return data
-
-
-class UserSerializerReadOnly(serializers.ModelSerializer):
-    role = serializers.CharField(read_only=True)
+class SubscribeSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         fields = (
+            'email',
+            'id',
+            'username',
             'first_name',
             'last_name',
-            'username',
-            'email'
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
         )
         model = User
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return Subscribe.objects.filter(
+            user=user,
+            author=obj
+        ).exists()
+
+    def get_recipes(self, obj):
+        limit = self.context['request'].query_params.get('recipes_limit')
+        if limit is None:
+            recipes = Recipe.objects.filter(author=obj)
+        else:
+            recipes = Recipe.objects.filter(author=obj)[:int(limit)]
+        return SubscribeRecipeSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+
+class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return Subscribe.objects.filter(
+            user=user,
+            author=obj
+        ).exists()
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed'
+        )
+
+
+class CustomUserCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'password'
+        )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -59,20 +120,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
 
 
-class Hex2NameColor(serializers.Field):
-    def to_representation(self, value):
-        return value
-
-    def to_internal_value(self, data):
-        try:
-            data = webcolors.hex_to_name(data)
-        except ValueError:
-            raise serializers.ValidationError('Для этого цвета нет имени')
-        return data
-
-
 class TagSerializer(serializers.ModelSerializer):
-    color = Hex2NameColor()
+    color = Base64ImageField(required=False)
 
     class Meta:
         fields = (

@@ -4,19 +4,22 @@ from rest_framework import routers
 from .views import (TagViweSet,
                     RecipeViweSet,
                     IngredientViweSet,
-                    FavoriteViweSet)
+                    FavoriteViweSet,
+                    CustomUserViewSet)
 
 router = routers.DefaultRouter()
 router_recipe = routers.DefaultRouter()
 router.register(r'tags', TagViweSet)
 router.register(r'recipes', RecipeViweSet)
-router_recipe.register(
-    r'(?P<name_id>\d+)/favorite', FavoriteViweSet, basename='favorite')
+# router_recipe.register(
+#     r'(?P<name_id>\d+)/favorite', FavoriteViweSet, basename='favorite')
 router.register(r'ingredients', IngredientViweSet)
-# router.register(r'users/?P<username_id>\d+)/subscribe/', ViweSet)
+router.register(r'users', CustomUserViewSet, basename='users')
 
 
 urlpatterns = [
     path('', include(router.urls)),
     path('recipes/', include(router_recipe.urls)),
+    path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]

@@ -1,13 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-USER = 'user'
-ADMIN = 'admin'
-ROLE_CHOICES = [
-    (USER, USER),
-    (ADMIN, ADMIN)
-]
-
 
 class User(AbstractUser):
     email = models.EmailField(
@@ -36,12 +29,6 @@ class User(AbstractUser):
         blank=True,
         verbose_name='Пароль'
     )
-    role = models.CharField(
-        max_length=10,
-        choices=ROLE_CHOICES,
-        default=USER,
-        verbose_name='Роль'
-    )
 
     class Meta:
         ordering = ['id']
@@ -51,6 +38,21 @@ class User(AbstractUser):
     def __str__(self):
         return f'{self.username}: {self.email}'
 
-    def is_admin(self):
-        return self.role == self.ADMIN
 
+class Subscribe(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        blank=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+        blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_subscribe')
+        ]
