@@ -106,6 +106,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True,
     )
+    image = Base64ImageField(required=False)
 
     class Meta:
         fields = (
@@ -121,10 +122,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    color = Base64ImageField(required=False)
-
     class Meta:
         fields = (
+            'id',
             'name',
             'color',
             'slug'
@@ -136,8 +136,19 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = (
-            'ingredient',
-            'number',
-            'unit_of_measure'
+            'id',
+            'name',
+            'measurement_unit'
         )
         model = Ingredient
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+        model = Recipe

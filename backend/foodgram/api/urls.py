@@ -10,9 +10,8 @@ from .views import (TagViweSet,
 router = routers.DefaultRouter()
 router_recipe = routers.DefaultRouter()
 router.register(r'tags', TagViweSet)
-router.register(r'recipes', RecipeViweSet)
-# router_recipe.register(
-#     r'(?P<name_id>\d+)/favorite', FavoriteViweSet, basename='favorite')
+router.register(r'recipes', RecipeViweSet, basename='recipes')
+router_recipe.register(r'favorite', FavoriteViweSet, basename='favorite')
 router.register(r'ingredients', IngredientViweSet)
 router.register(r'users', CustomUserViewSet, basename='users')
 

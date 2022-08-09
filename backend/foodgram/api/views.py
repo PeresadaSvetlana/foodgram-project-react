@@ -10,15 +10,15 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-# from rest_framework.views import APIView
 from users.models import User, Subscribe
-from recipes.models import Recipe, Tag, Ingredient
+from recipes.models import Recipe, Tag, Ingredient, Favorite
 from .serializers import (CustomUserSerializer,
                           PasswordSerilizer,
                           SubscribeSerializer,
                           RecipeSerializer,
                           IngredientSerializer,
-                          TagSerializer)
+                          TagSerializer,
+                          FavoriteSerializer)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -98,15 +98,6 @@ class CustomUserViewSet(UserViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class RecipeViweSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    serializer_class = RecipeSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-
 class TagViweSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -119,9 +110,43 @@ class IngredientViweSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
 
 
-class FavoriteViweSet(viewsets.ModelViewSet):
+class RecipeViweSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    serializer_class = RecipeSerializer
 
-    def get_queryset(self):
-        name = get_object_or_404(Recipe, id=self.kwargs.get('name_id'))
-        return name.recipes.all().add(Recipe.objects.get('id'))
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    @action(detail=True,
+            methods=['POST', 'DELETE'],
+            permission_classes=(IsAuthenticated, ))
+    def favorite(self, request, id):
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, id=id)
+        follow = Favorite.objects.filter(
+            user=user,
+            recipe=recipe
+            )
+        if user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if request.method == 'POST':
+            if follow.exists():
+                data = {
+                    'errors':
+                        ('Вы уже добавили этот рецепт в избранное')
+                }
+                return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+            favorite = Favorite.objects.create(recipe=recipe)
+            serializer = FavoriteSerializer(favorite.recipe)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            if not follow.exists():
+                data = {
+                    'errors':
+                        ('Такого рецепта нет в избранных')
+                }
+                return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+            follow.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
