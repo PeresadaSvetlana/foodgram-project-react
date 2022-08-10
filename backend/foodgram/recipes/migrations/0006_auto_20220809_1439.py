@@ -7,18 +7,22 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recipes', '0005_auto_20220809_1434'),
+        ("recipes", "0005_auto_20220809_1434"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='recipe',
-            options={'ordering': ['-pub_date']},
+            name="recipe",
+            options={"ordering": ["-pub_date"]},
         ),
         migrations.AddField(
-            model_name='recipe',
-            name='pub_date',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now, verbose_name='Дата публикации'),
+            model_name="recipe",
+            name="pub_date",
+            field=models.DateTimeField(
+                auto_now_add=True,
+                default=django.utils.timezone.now,
+                verbose_name="Дата публикации",
+            ),
             preserve_default=False,
         ),
     ]

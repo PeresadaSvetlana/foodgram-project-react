@@ -10,52 +10,108 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('recipes', '0004_auto_20220809_1153'),
+        ("recipes", "0004_auto_20220809_1153"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='recipe',
+            name="recipe",
             options={},
         ),
         migrations.AlterField(
-            model_name='recipe',
-            name='cooking_time',
-            field=models.IntegerField(validators=[django.core.validators.MinValueValidator(1)], verbose_name='Время приготовления (в минутах)'),
+            model_name="recipe",
+            name="cooking_time",
+            field=models.IntegerField(
+                validators=[django.core.validators.MinValueValidator(1)],
+                verbose_name="Время приготовления (в минутах)",
+            ),
         ),
         migrations.RemoveField(
-            model_name='recipe',
-            name='ingredients',
+            model_name="recipe",
+            name="ingredients",
         ),
         migrations.RemoveField(
-            model_name='recipe',
-            name='tags',
+            model_name="recipe",
+            name="tags",
         ),
         migrations.AddField(
-            model_name='recipe',
-            name='tags',
-            field=models.ManyToManyField(to='recipes.Tag', verbose_name='Тег'),
+            model_name="recipe",
+            name="tags",
+            field=models.ManyToManyField(to="recipes.Tag", verbose_name="Тег"),
         ),
         migrations.CreateModel(
-            name='RecipeIngredient',
+            name="RecipeIngredient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.ImageField(upload_to='', validators=[django.core.validators.MinValueValidator(1)], verbose_name='Количество')),
-                ('ingredients', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='recipes.ingredient')),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='recipes.recipe')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "amount",
+                    models.ImageField(
+                        upload_to="",
+                        validators=[
+                            django.core.validators.MinValueValidator(1)
+                        ],
+                        verbose_name="Количество",
+                    ),
+                ),
+                (
+                    "ingredients",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="recipes.ingredient",
+                    ),
+                ),
+                (
+                    "recipe",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="recipes.recipe",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Favorite',
+            name="Favorite",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='recipes.recipe')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "recipe",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="recipes.recipe",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='recipe',
-            name='ingredients',
-            field=models.ManyToManyField(through='recipes.RecipeIngredient', to='recipes.Ingredient', verbose_name='Ингридиент'),
+            model_name="recipe",
+            name="ingredients",
+            field=models.ManyToManyField(
+                through="recipes.RecipeIngredient",
+                to="recipes.Ingredient",
+                verbose_name="Ингридиент",
+            ),
         ),
     ]

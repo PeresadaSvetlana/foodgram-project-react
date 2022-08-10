@@ -6,17 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recipes', '0002_recipe_author'),
+        ("recipes", "0002_recipe_author"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='recipe',
-            options={'ordering': ['-id']},
+            name="recipe",
+            options={"ordering": ["-id"]},
         ),
         migrations.AlterField(
-            model_name='recipe',
-            name='image',
-            field=models.ImageField(blank=True, null=True, upload_to='recipes/', verbose_name='Картинка'),
+            model_name="recipe",
+            name="image",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                upload_to="recipes/",
+                verbose_name="Картинка",
+            ),
         ),
     ]

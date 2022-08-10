@@ -10,38 +10,115 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Ingredient',
+            name="Ingredient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ingredient', models.CharField(max_length=200, verbose_name='Наименование ингредиента')),
-                ('number', models.IntegerField(verbose_name='Колличество')),
-                ('unit_of_measure', models.TextField(verbose_name='Единица измерения')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "ingredient",
+                    models.CharField(
+                        max_length=200, verbose_name="Наименование ингредиента"
+                    ),
+                ),
+                ("number", models.IntegerField(verbose_name="Колличество")),
+                (
+                    "unit_of_measure",
+                    models.TextField(verbose_name="Единица измерения"),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Recipe',
+            name="Recipe",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256, verbose_name='Наименование рецепта')),
-                ('image', models.ImageField(blank=True, null=True, upload_to='posts/', verbose_name='Картинка')),
-                ('text', models.TextField(verbose_name='Описание рецепта')),
-                ('ingredients', multiselectfield.db.fields.MultiSelectField(max_length=200, verbose_name=recipes.models.Ingredient)),
-                ('tags', multiselectfield.db.fields.MultiSelectField(max_length=200, verbose_name=recipes.models.Tag)),
-                ('cooking_time', models.IntegerField(validators=[django.core.validators.MinLengthValidator(1)], verbose_name='Время приготовления (в минутах)')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        max_length=256, verbose_name="Наименование рецепта"
+                    ),
+                ),
+                (
+                    "image",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to="posts/",
+                        verbose_name="Картинка",
+                    ),
+                ),
+                ("text", models.TextField(verbose_name="Описание рецепта")),
+                (
+                    "ingredients",
+                    multiselectfield.db.fields.MultiSelectField(
+                        max_length=200, verbose_name=recipes.models.Ingredient
+                    ),
+                ),
+                (
+                    "tags",
+                    multiselectfield.db.fields.MultiSelectField(
+                        max_length=200, verbose_name=recipes.models.Tag
+                    ),
+                ),
+                (
+                    "cooking_time",
+                    models.IntegerField(
+                        validators=[
+                            django.core.validators.MinLengthValidator(1)
+                        ],
+                        verbose_name="Время приготовления (в минутах)",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Tag',
+            name="Tag",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256, verbose_name='Название')),
-                ('color', models.CharField(max_length=256, verbose_name='Цвет в HEX')),
-                ('slug', models.SlugField(max_length=200, unique=True, verbose_name='Уникальный слаг')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(max_length=256, verbose_name="Название"),
+                ),
+                (
+                    "color",
+                    models.CharField(
+                        max_length=256, verbose_name="Цвет в HEX"
+                    ),
+                ),
+                (
+                    "slug",
+                    models.SlugField(
+                        max_length=200,
+                        unique=True,
+                        verbose_name="Уникальный слаг",
+                    ),
+                ),
             ],
         ),
     ]
