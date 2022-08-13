@@ -1,4 +1,6 @@
 from django.http import HttpResponse
+from django.db.models import Sum
+import csv
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -31,6 +33,7 @@ from .serializers import (
     SubscribeSerializer,
     TagSerializer,
 )
+from .permissions import IsAdminOrReadOnly
 
 
 class CustomUserViewSet(UserViewSet):
@@ -100,16 +103,18 @@ class CustomUserViewSet(UserViewSet):
 
 class TagViweSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientViweSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
     serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViweSet(viewsets.ModelViewSet):
@@ -135,9 +140,10 @@ class RecipeViweSet(viewsets.ModelViewSet):
         methods=["POST", "DELETE"],
         permission_classes=(IsAuthenticated,),
     )
-    def favorite(self, request, id):
+    def favorite(self, request, *args, **kwargs):
+        recipe_id = int(self.kwargs['recipe_id'])
         user = self.request.user
-        recipe = get_object_or_404(Recipe, id=id)
+        recipe = get_object_or_404(Recipe, id=recipe_id)
         follow = Favorite.objects.filter(user=user, recipe=recipe)
         if user.is_anonymous:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -160,9 +166,10 @@ class RecipeViweSet(viewsets.ModelViewSet):
         methods=["POST", "DELETE"],
         permission_classes=(IsAuthenticated,),
     )
-    def shopping_cart(self, request, id):
+    def shopping_cart(self, request, *args, **kwargs):
+        recipe_id = int(self.kwargs['recipe_id'])
         user = self.request.user
-        recipe = get_object_or_404(Recipe, id=id)
+        recipe = get_object_or_404(Recipe, id=recipe_id)
         shopping_cart = ShoppingCart.objects.filter(user=user, recipe=recipe)
         if user.is_anonymous:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -186,31 +193,49 @@ class RecipeViweSet(viewsets.ModelViewSet):
         detail=False, methods=["GET"], permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
+        # user = self.request.user
+        # shoping_cart = user.purchases.all()
+        # recipe_ingredients = {}
+        # for i in shoping_cart:
+        #     recipe = i.recipe
+        #     ingredients = RecipeIngredient.objects.filter(recipe=recipe)
+        #     for ingredient in ingredients:
+        #         amount = ingredient.amount
+        #         name = ingredient.ingredient.name
+        #         measurement_unit = ingredient.ingredient.measurement_unit
+        #         if name not in recipe_ingredients:
+        #             recipe_ingredients[name] = {
+        #                 "amount": amount,
+        #                 "measurement_unit": measurement_unit,
+        #             }
+        #         else:
+        #             recipe_ingredients[name]["amount"] = (
+        #                 recipe_ingredients[name]["amount"] + amount
+        #             )
+        # shopping_list = []
+        # for i in recipe_ingredients:
+        #     shopping_list.append(
+        #         f'{i} - {recipe_ingredients[i]["amount"]} '
+        #         f'{recipe_ingredients[i]["measurement_unit"]}'
+        #     )
+        # response = HttpResponse(shopping_list, "Content-Type: text/plain")
+        # response["Content-Disposition"] = 'attachment; filename="shoplist.txt"'
+        # return response
         user = self.request.user
-        shoping_cart = user.purchases.all()
-        recipe_ingredients = {}
-        for i in shoping_cart:
-            recipe = i.recipe
-            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-            for ingredient in ingredients:
-                amount = ingredient.amount
-                name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                if name not in recipe_ingredients:
-                    recipe_ingredients[name] = {
-                        "amount": amount,
-                        "measurement_unit": measurement_unit,
-                    }
-                else:
-                    recipe_ingredients[name]["amount"] = (
-                        recipe_ingredients[name]["amount"] + amount
-                    )
-        shopping_list = []
-        for i in recipe_ingredients:
-            shopping_list.append(
-                f'{i} - {recipe_ingredients[i]["amount"]} '
-                f'{recipe_ingredients[i]["measurement_unit"]}'
-            )
-        response = HttpResponse(shopping_list, "Content-Type: text/plain")
-        response["Content-Disposition"] = 'attachment; filename="shoplist.txt"'
+        if user.is_anonymous:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values(
+            'ingredients__name', 'ingredients__measurement_unit'
+        ).annotate(ingredient_amount=Sum('amount')).values_list(
+            'ingredients__name', 'ingredients__measurement_unit',
+            'ingredients_amount')
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = ('attachment;'
+                                           'filename="Shoppingcart.csv"')
+        response.write(u'\ufeff'.encode('utf8'))
+        writer = csv.writer(response)
+        for item in list(ingredients):
+            writer.writerow(item)
         return response
