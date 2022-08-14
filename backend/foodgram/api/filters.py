@@ -4,15 +4,16 @@ from recipes.models import Recipe, User, Ingredient
 
 class RecipeFilter(django_filter.FilterSet):
     author = django_filter.ModelChoiceFilter(queryset=User.objects.all())
-    tags = django_filter.AllValuesMultipleFilter(field_name='tags__slug')
-    is_favorited = django_filter.BooleanFilter(method='get_is_favorited')
+    tags = django_filter.AllValuesMultipleFilter(field_name="tags__slug")
+    is_favorited = django_filter.BooleanFilter(method="get_is_favorited")
     is_in_shopping_cart = django_filter.BooleanFilter(
-        method='get_is_in_shopping_cart')
+        method="get_is_in_shopping_cart"
+    )
 
     class Meta:
 
         model = Recipe
-        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
+        fields = ("author", "tags", "is_favorited", "is_in_shopping_cart")
 
     def get_is_favorited(self, queryset, name, value):
         if self.request.user.is_authenticated and value:
@@ -24,17 +25,11 @@ class RecipeFilter(django_filter.FilterSet):
             return queryset.filter(shopping_cart__user=self.request.user)
         return queryset.all()
 
-# class RecipeFilter(filters.FilterSet):
-#     author = filters.ModelChoiceFilter(queryset=User.objects.all())
-#     tags = filters.AllValuesMultipleFilter(field_name="tags__slug")
-
-#     class Meta:
-#         model = Recipe
-#         fields = ["tags", "author"]
-
 
 class IngredientFilter(django_filter.FilterSet):
-    name = django_filter.CharFilter(field_name="name", lookup_expr="istartswith")
+    name = django_filter.CharFilter(
+        field_name="name", lookup_expr="istartswith"
+    )
 
     class Meta:
         model = Ingredient

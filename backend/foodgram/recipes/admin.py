@@ -9,9 +9,11 @@ from .models import (
     ShoppingCart,
 )
 
+
 @admin.register(Ingredient)
 class IngredientAdmin(ImportExportModelAdmin):
     pass
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
