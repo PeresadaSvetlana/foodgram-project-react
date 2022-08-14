@@ -1,4 +1,3 @@
-from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from .models import (
     Ingredient,
@@ -8,11 +7,6 @@ from .models import (
     Favorite,
     ShoppingCart,
 )
-
-
-@admin.register(Ingredient)
-class IngredientAdmin(ImportExportModelAdmin):
-    pass
 
 
 @admin.register(Tag)
@@ -35,13 +29,13 @@ class RecipeAdmin(admin.ModelAdmin):
     empty_value_display = "-пусто-"
 
 
-# @admin.register(Ingredient)
-# class IngredientAdmin(admin.ModelAdmin):
-#     list_display = ("id", "name", "measurement_unit")
-#     search_fields = ("name",)
-#     list_filter = ("name",)
-#     inlines = (RecipeIngredientInLine,)
-#     empty_value_display = "-пусто-"
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "measurement_unit")
+    search_fields = ("name",)
+    list_filter = ("name",)
+    inlines = (RecipeIngredientInLine,)
+    empty_value_display = "-пусто-"
 
 
 @admin.register(Favorite)

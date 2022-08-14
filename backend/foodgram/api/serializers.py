@@ -1,5 +1,6 @@
-from django.core.exceptions import ValidationError
 from collections import OrderedDict
+
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
@@ -21,8 +22,28 @@ class SubscribeRecipeSerializer(serializers.ModelSerializer):
         model = Recipe
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+        )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        return obj.following.filter(user=request.user).exists()
+
+
+class SubscribeSerializer(CustomUserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -39,43 +60,23 @@ class SubscribeSerializer(serializers.ModelSerializer):
         )
         model = User
 
-    def get_is_subscribed(self, obj):
-        user = self.context["request"].user
-        if user.is_anonymous:
-            return False
-        return Subscribe.objects.filter(user=user, author=obj).exists()
-
     def get_recipes(self, obj):
-        limit = self.context["request"].query_params.get("recipes_limit")
-        if limit is None:
-            recipes = Recipe.objects.filter(author=obj)
+        recipe_limit = self.context["request"].query_params.get(
+            "recipes_limit"
+        )
+        recipes = obj.recipes.all()
+        if recipe_limit is None:
+            recipes_serializer = SubscribeRecipeSerializer(recipes, many=True)
         else:
-            recipes = Recipe.objects.filter(author=obj)[: int(limit)]
-        return SubscribeRecipeSerializer(recipes, many=True).data
+            recipe_limit = int(recipe_limit)
+            recipes_serializer = SubscribeRecipeSerializer(
+                recipes[:recipe_limit],
+                many=True
+            )
+        return recipes_serializer.data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
-
-
-class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
-    def get_is_subscribed(self, obj):
-        user = self.context["request"].user
-        if user.is_anonymous:
-            return False
-        return Subscribe.objects.filter(user=user, author=obj).exists()
-
-    class Meta:
-        model = User
-        fields = (
-            "email",
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-        )
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):

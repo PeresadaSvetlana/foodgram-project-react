@@ -1,39 +1,25 @@
-from django.http import HttpResponse
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag,
-)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .pagination import CustomPaginator
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from users.models import Subscribe, User
 
 from .filters import IngredientFilter, RecipeFilter
-from .serializers import (
-    CustomUserSerializer,
-    FavoriteSerializer,
-    IngredientSerializer,
-    PasswordSerilizer,
-    RecipeCreateSerializer,
-    RecipeReadSerializer,
-    ShoppingCartSerializer,
-    SubscribeSerializer,
-    TagSerializer,
-)
+from .pagination import CustomPaginator
 from .permissions import IsAdminOrReadOnly
+from .serializers import (CustomUserSerializer, FavoriteSerializer,
+                          IngredientSerializer, PasswordSerilizer,
+                          RecipeCreateSerializer, RecipeReadSerializer,
+                          ShoppingCartSerializer, SubscribeSerializer,
+                          TagSerializer)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -42,7 +28,9 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = CustomPaginator
 
     @action(
-        detail=False, methods=["POST"], permission_classes=(IsAuthenticated,)
+        detail=False,
+        methods=["POST"],
+        permission_classes=(IsAuthenticated,)
     )
     def set_password(self, request, pk=None):
         user = self.request.user
@@ -61,10 +49,13 @@ class CustomUserViewSet(UserViewSet):
             )
 
     @action(
-        detail=False, methods=["GET"], permission_classes=(IsAuthenticated,)
+        detail=False,
+        methods=["GET"],
+        permission_classes=(IsAuthenticated,)
     )
     def subscriptions(self, request):
-        queryset = User.objects.filter(follower__user=request.user)
+        user = request.user
+        queryset = user.following.filter(user=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = SubscribeSerializer(
             pages, many=True, context={"request": request}
@@ -190,7 +181,9 @@ class RecipeViweSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=False, methods=["GET"], permission_classes=(IsAuthenticated,)
+        detail=False,
+        methods=["GET"],
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         shoping_list = "Список покупок:\n\n"
