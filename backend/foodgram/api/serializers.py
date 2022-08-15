@@ -6,7 +6,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import Favorite, Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
-from users.models import Subscribe, User
+from users.models import User
 
 
 class PasswordSerilizer(serializers.ModelSerializer):
@@ -40,7 +40,7 @@ class CustomUserSerializer(UserSerializer):
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return obj.following.filter(user=request.user).exists()
+        return obj.follower.filter(user=request.user, author=obj).exists()
 
 
 class SubscribeSerializer(CustomUserSerializer):
