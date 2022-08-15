@@ -11,13 +11,13 @@ Python 3.7, Django 3.0.5, Django REST Framework 3.11, PostgresQL, Docker, Yandex
 
 Необхадимо скачать проект выполнив команду:
 
---
+```
 git clone git@github.com:PeresadaSvetlana/foodgram-project-react.git
---
+```
 
 Перейти в папку cd infra cоздать файл .env с параметрами:
 
---
+```
 DB_ENGINE=<django.db.backends.postgresql>
 DB_NAME=<имя базы данных postgres>
 DB_USER=<пользователь бд>
@@ -25,16 +25,17 @@ DB_PASSWORD=<пароль>
 DB_HOST=<db>
 DB_PORT=<5432>
 SECRET_KEY=<секретный ключ проекта django>
---
+```
 Выполнить команду:
 
+```
 docker-compose up -d --build
-
+```
 Работу проекта можно проверить по ссылке:
 
+```
 http://130.193.52.151/signin
-
-
+```
 
 
 
