@@ -31,9 +31,6 @@ SECRET_KEY=<секретный ключ проекта django>
 ```
 docker-compose up -d --build
 ```
-Работу проекта можно проверить по ссылке:
-
-http://130.193.52.151/signin
 
 
 
